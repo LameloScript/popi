@@ -6,7 +6,7 @@ Application Next.js fullstack monolithe — Xtream Codes compatible.
 
 ```bash
 # 1. Aller dans le dossier
-cd iptv-app
+cd popi
 
 # 2. Installer les dépendances
 npm install
@@ -28,7 +28,7 @@ app/
   (app)/        → Pages protégées (Live TV, Films, Séries, Favoris)
   login/        → Page de connexion
 lib/
-  db.ts         → SQLite (sessions + favoris)
+  db.ts         → Turso/libSQL (sessions + favoris)
   auth.ts       → JWT helpers
   iptv.ts       → Client proxy Xtream Codes
 components/     → Navbar, Player HLS, Cards, Sidebar
