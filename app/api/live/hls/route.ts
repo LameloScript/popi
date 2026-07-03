@@ -25,7 +25,9 @@ function rewritePlaylist(text: string, baseUrl: string, cookies: string): string
       const trimmed = line.trim();
       if (!trimmed || trimmed.startsWith("#")) return line;
       const abs = resolveUrl(trimmed, baseUrl);
-      if (/\.ts(\?|$)/i.test(trimmed)) return toProxyUrl(abs, cookies);
+      // Segments .ts : le navigateur les recupere directement (hash anti-hotlink lie a l'IP)
+      if (/\.ts(\?|$)/i.test(trimmed)) return abs;
+      // Playlists .m3u8 : proxifiees pour propager les cookies
       if (trimmed.includes(".m3u8")) return toProxyUrl(abs, cookies);
       return line;
     });
