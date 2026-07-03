@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
   }
 
   const sessionId = randomUUID();
-  createSession(sessionId, normalServer, username, password);
+  await createSession(sessionId, normalServer, username, password);
   const token = await signToken(sessionId);
 
   const res = NextResponse.json({ ok: true });

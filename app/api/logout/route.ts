@@ -4,7 +4,7 @@ import { deleteSession } from "@/lib/db";
 
 export async function POST() {
   const sessionId = await getSessionId();
-  if (sessionId) deleteSession(sessionId);
+  if (sessionId) await deleteSession(sessionId);
 
   const res = NextResponse.json({ ok: true });
   res.cookies.set(COOKIE, "", { maxAge: 0, path: "/" });

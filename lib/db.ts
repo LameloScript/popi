@@ -1,23 +1,22 @@
-import "./dns-init";
-import Database from "better-sqlite3";
-import path from "path";
+import { createClient } from "@libsql/client";
 
-const DB_PATH = path.resolve("./iptv.db");
+const db = createClient({
+  url: process.env.TURSO_DATABASE_URL || "file:./iptv.db",
+  authToken: process.env.TURSO_AUTH_TOKEN,
+});
 
-const db = new Database(DB_PATH);
-
-// Active WAL pour de meilleures performances
-db.pragma("journal_mode = WAL");
-
-db.exec(`
+// Init tables
+await db.execute(`
   CREATE TABLE IF NOT EXISTS sessions (
     id        TEXT PRIMARY KEY,
     server    TEXT NOT NULL,
     username  TEXT NOT NULL,
     password  TEXT NOT NULL,
     created_at INTEGER DEFAULT (strftime('%s','now'))
-  );
+  )
+`);
 
+await db.execute(`
   CREATE TABLE IF NOT EXISTS favorites (
     id         INTEGER PRIMARY KEY AUTOINCREMENT,
     session_id TEXT NOT NULL,
@@ -26,53 +25,83 @@ db.exec(`
     name       TEXT NOT NULL,
     cover      TEXT,
     UNIQUE(session_id, type, stream_id)
-  );
+  )
+`);
 
+await db.execute(`
   CREATE TABLE IF NOT EXISTS settings (
-    key        TEXT PRIMARY KEY,
-    value      TEXT NOT NULL
-  );
+    key   TEXT PRIMARY KEY,
+    value TEXT NOT NULL
+  )
 `);
 
 export default db;
 
 // Helpers settings
-export function getSetting(key: string): string | undefined {
-  const row = db.prepare("SELECT value FROM settings WHERE key = ?").get(key) as { value: string } | undefined;
-  return row?.value;
+export async function getSetting(key: string): Promise<string | undefined> {
+  const result = await db.execute({
+    sql: "SELECT value FROM settings WHERE key = ?",
+    args: [key],
+  });
+  return (result.rows[0] as any)?.value;
 }
 
-export function setSetting(key: string, value: string) {
-  db.prepare("INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)").run(key, value);
+export async function setSetting(key: string, value: string) {
+  await db.execute({
+    sql: "INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)",
+    args: [key, value],
+  });
 }
 
 // Helpers sessions
-export function createSession(id: string, server: string, username: string, password: string) {
-  db.prepare("INSERT OR REPLACE INTO sessions (id, server, username, password) VALUES (?, ?, ?, ?)")
-    .run(id, server, username, password);
+export async function createSession(id: string, server: string, username: string, password: string) {
+  await db.execute({
+    sql: "INSERT OR REPLACE INTO sessions (id, server, username, password) VALUES (?, ?, ?, ?)",
+    args: [id, server, username, password],
+  });
 }
 
-export function getSession(id: string): { server: string; username: string; password: string } | undefined {
-  return db.prepare("SELECT server, username, password FROM sessions WHERE id = ?").get(id) as any;
+export async function getSession(id: string): Promise<{ server: string; username: string; password: string } | undefined> {
+  const result = await db.execute({
+    sql: "SELECT server, username, password FROM sessions WHERE id = ?",
+    args: [id],
+  });
+  return result.rows[0] as any;
 }
 
-export function deleteSession(id: string) {
-  db.prepare("DELETE FROM sessions WHERE id = ?").run(id);
+export async function deleteSession(id: string) {
+  await db.execute({
+    sql: "DELETE FROM sessions WHERE id = ?",
+    args: [id],
+  });
 }
 
 // Helpers favoris
-export function getFavorites(sessionId: string, type?: string) {
-  if (type) return db.prepare("SELECT * FROM favorites WHERE session_id = ? AND type = ?").all(sessionId, type);
-  return db.prepare("SELECT * FROM favorites WHERE session_id = ?").all(sessionId);
+export async function getFavorites(sessionId: string, type?: string) {
+  if (type) {
+    const result = await db.execute({
+      sql: "SELECT * FROM favorites WHERE session_id = ? AND type = ?",
+      args: [sessionId, type],
+    });
+    return result.rows;
+  }
+  const result = await db.execute({
+    sql: "SELECT * FROM favorites WHERE session_id = ?",
+    args: [sessionId],
+  });
+  return result.rows;
 }
 
-export function addFavorite(sessionId: string, type: string, streamId: string, name: string, cover: string) {
-  db.prepare("INSERT OR IGNORE INTO favorites (session_id, type, stream_id, name, cover) VALUES (?, ?, ?, ?, ?)")
-    .run(sessionId, type, streamId, name, cover);
+export async function addFavorite(sessionId: string, type: string, streamId: string, name: string, cover: string) {
+  await db.execute({
+    sql: "INSERT OR IGNORE INTO favorites (session_id, type, stream_id, name, cover) VALUES (?, ?, ?, ?, ?)",
+    args: [sessionId, type, streamId, name, cover],
+  });
 }
 
-export function removeFavorite(sessionId: string, type: string, streamId: string) {
-  db.prepare("DELETE FROM favorites WHERE session_id = ? AND type = ? AND stream_id = ?")
-    .run(sessionId, type, streamId);
+export async function removeFavorite(sessionId: string, type: string, streamId: string) {
+  await db.execute({
+    sql: "DELETE FROM favorites WHERE session_id = ? AND type = ? AND stream_id = ?",
+    args: [sessionId, type, streamId],
+  });
 }
-

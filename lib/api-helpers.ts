@@ -8,7 +8,7 @@ export async function requireCreds(): Promise<{ creds: Creds } | NextResponse> {
   const sessionId = await getSessionId();
   if (!sessionId) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
 
-  const session = getSession(sessionId);
+  const session = await getSession(sessionId);
   if (!session) return NextResponse.json({ error: "Session expirée" }, { status: 401 });
 
   return { creds: session };
