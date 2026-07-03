@@ -15,7 +15,12 @@ export default function FavoritesPage() {
   async function playFav(f: any) {
     let url = "";
     let isLive = false;
-    if (f.type === "live")   { url = `/api/live/hls?streamId=${f.stream_id}`; isLive = true; }
+    if (f.type === "live") {
+      const r = await fetch(`/api/live/url?streamId=${f.stream_id}`);
+      const data = await r.json();
+      url = data.url;
+      isLive = true;
+    }
     if (f.type === "movie")  url = `/api/movies/proxy?streamId=${f.stream_id}`;
     if (f.type === "series") url = `/api/series/proxy?streamId=${f.stream_id}`;
     setPlayer({ url, title: f.name, isLive });
