@@ -25,10 +25,10 @@ function rewritePlaylist(text: string, baseUrl: string, cookies: string): string
       const trimmed = line.trim();
       if (!trimmed || trimmed.startsWith("#")) return line;
       const abs = resolveUrl(trimmed, baseUrl);
-      // Segments .ts : le navigateur les recupere directement (hash anti-hotlink lie a l'IP)
-      if (/\.ts(\?|$)/i.test(trimmed)) return abs;
-      // Playlists .m3u8 : proxifiees pour propager les cookies
-      if (trimmed.includes(".m3u8")) return toProxyUrl(abs, cookies);
+      // Tout est proxifie (segments .ts ET sous-playlists .m3u8) : le site est en HTTPS,
+      // impossible de charger du HTTP direct (mixed content). Toutes les requetes partent
+      // de l'IP du serveur, ce qui satisfait aussi l'anti-hotlink lie a l'IP.
+      if (/\.ts(\?|$)/i.test(trimmed) || trimmed.includes(".m3u8")) return toProxyUrl(abs, cookies);
       return line;
     });
 }

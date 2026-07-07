@@ -32,13 +32,8 @@ export default function LivePage() {
 
   async function playChannel(ch: any) {
     setActive(ch);
-    let url: string | undefined;
-    try {
-      const r = await fetch(`/api/live/url?streamId=${ch.stream_id}`);
-      ({ url } = await r.json());
-    } catch { return; }
-    if (!url) return;
-    setStreamUrl(url);
+    // Lecture via le proxy HTTPS (le flux IPTV est en HTTP → mixed content sinon)
+    setStreamUrl(`/api/live/hls?streamId=${ch.stream_id}`);
     // Historique "reprendre"
     fetch("/api/history", {
       method: "POST",

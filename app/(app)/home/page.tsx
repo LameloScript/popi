@@ -21,13 +21,7 @@ export default function HomePage() {
 
   async function resume(item: any) {
     if (item.type === "live") {
-      let url: string | undefined;
-      try {
-        const r = await fetch(`/api/live/url?streamId=${item.stream_id}`);
-        ({ url } = await r.json());
-      } catch { return; }
-      if (!url) return;
-      setPlayer({ url, title: item.name, isLive: true });
+      setPlayer({ url: `/api/live/hls?streamId=${item.stream_id}`, title: item.name, isLive: true });
     } else if (item.type === "movie") {
       const ext = item.data?.ext ?? "mp4";
       setPlayer({ url: `/api/movies/proxy?streamId=${item.stream_id}&ext=${ext}`, title: item.name });

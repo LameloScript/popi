@@ -16,9 +16,7 @@ export default function FavoritesPage() {
     let url = "";
     let isLive = false;
     if (f.type === "live") {
-      const r = await fetch(`/api/live/url?streamId=${f.stream_id}`);
-      const data = await r.json();
-      url = data.url;
+      url = `/api/live/hls?streamId=${f.stream_id}`;
       isLive = true;
     }
     if (f.type === "movie")  url = `/api/movies/proxy?streamId=${f.stream_id}`;
